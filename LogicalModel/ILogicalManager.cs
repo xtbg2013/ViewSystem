@@ -11,7 +11,9 @@ namespace LogicalModel
         void InitManager();
         bool Connect(bool isConnected);
         bool Calibration(out string msg); //标定
-        bool ReadData(out Dictionary<int, double> data, out string msg);
+        double CalculateKpa(double CapacitanceValue);
+        bool ReadData(ref Dictionary<int, double> data, out string msg);
         bool Save(string path);
+       
     }
 }

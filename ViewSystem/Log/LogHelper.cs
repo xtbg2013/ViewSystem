@@ -81,8 +81,6 @@ namespace Log
                 logConsole.Fatal(info);
             }
         }
-        
-
-
+       
     }
 }

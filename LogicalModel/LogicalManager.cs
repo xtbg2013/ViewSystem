@@ -18,7 +18,7 @@ namespace LogicalModel
         private ConfigParam _param;
         private System.Timers.Timer _timer;
         private AutoResetEvent _autoEvent;
-        private Dictionary<int, int> _calibrationValue;//校准值
+        private Dictionary<int, int> _calibrationValue;        //校准值
         private Dictionary<int, int> _calibrationCount;        //校准数据计数
         private Dictionary<int, double> _capacitance;
         private bool _calibrationSuccess;
@@ -80,12 +80,19 @@ namespace LogicalModel
                 if (this._calibrationCount[i] < this._readTimes)
                 {
                     stop = false;
+                    break;
                 }
             }
-            if(stop)
+            if (stop)
             {
+                for (int i = 0; i < this._calibrationValue.Count; i++)
+                {
+                    this._calibrationValue[i] /= this._readTimes;
+                }
+                this._timer.Stop();
                 this._autoEvent.Set();
             }
+            
         }
         private int GetCount()
         {
@@ -94,7 +101,14 @@ namespace LogicalModel
 
         private double CaculateCapacitance(int val)
         {
-            return 4 * (val) / 65536;
+            double value = (4 * (double)val) / (double)65536;
+            return value;
+        }
+        public double CalculateKpa(double CapacitanceValue)
+        {
+            CapacitanceValue *= 1000;
+            double y = 2.65 * Math.Pow(Math.E, CapacitanceValue / 56.09) - 2.86;
+            return y;
         }
         
         public void InitManager()
@@ -106,29 +120,32 @@ namespace LogicalModel
             this._autoEvent = new AutoResetEvent(false);
             this._save = new SaveData();
             int count = GetCount();
-            for (int i = 0;i< count; i++)
+            InitCalibration();
+        }
+
+        private void InitCalibration()
+        {
+            int count = GetCount();
+            for (int i = 0; i < count; i++)
             {
                 this._calibrationCount[i] = 0;
                 this._calibrationValue[i] = 0;
             }
         }
-
-        public bool ReadData(out Dictionary<int, double> data, out string msg)
+        public bool ReadData(ref Dictionary<int, double> data, out string msg)
         {
             msg = "";
-            data = null;
-            
             if (GetCalibrationStatus())
             {
-                Dictionary<int, int> tempData=new Dictionary<int, int>();
+                Dictionary<int, int> tempData = new Dictionary<int, int>();
                 this._iDataCom.ReadData(ref tempData);
                 foreach (var item in tempData)
                 {
-                    tempData[item.Key] -= this._calibrationValue[item.Key];
-                    data[item.Key] = CaculateCapacitance(tempData[item.Key]);
+                    int val = tempData[item.Key] - this._calibrationValue[item.Key];
+                    data[item.Key] = CaculateCapacitance(val);
+                    //data[item.Key] = CalculateKpa(CaculateCapacitance(val)*1000);
                     this._capacitance[item.Key] = data[item.Key];
                 }
-                    
                 return true;
             }
             else
@@ -136,16 +153,16 @@ namespace LogicalModel
                 msg = "not calucation!";
                 return false;
             }
-          
-                
+
+
             //Random ran = new Random();
             //Dictionary<int, double> x = new Dictionary<int, double>();
             //for (int i = 0; i < 100; i++)
             //{
             //    int RandKey = ran.Next(0, 255);
-            //    x[i] =  Convert.ToDouble(RandKey);
-            //}  
-            //return x;
+            //    data[i] = Convert.ToDouble(RandKey);
+            //}
+            //return true;
         }
         public bool Connect(bool isConnected)
         {
@@ -158,9 +175,10 @@ namespace LogicalModel
         {
             msg = "";
             bool res;
+            InitCalibration();
             this._timer.Start();
             
-            if (!this._autoEvent.WaitOne(6000))
+            if (!this._autoEvent.WaitOne(10000))
             {
                 res = false;
                 int count = GetCount();
@@ -170,15 +188,17 @@ namespace LogicalModel
                     {
                         this._logger.Error("calibration error,number" + i+"----" + this._calibrationCount[i]);
                     }
+                     
                 }
-                
+                this._timer.Stop();
             }
             else
             {
                 res = true;
+                SetCalibrationStatus(res);
             }
-            this._timer.Stop();
-            SetCalibrationStatus(res);
+            
+            
             return res;
         }
         public bool Save(string path)

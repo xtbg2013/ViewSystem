@@ -11,7 +11,7 @@ using ProgressODoom;
 using GlobalFiles;
 using System.Collections;
 using Log;
-using DataService;
+using LogicalModel;
 namespace ViewSystem
 {
     public partial class ViewUc : UserControl
@@ -19,19 +19,20 @@ namespace ViewSystem
         private Timer _redrawTimer;
         private int _row;
         private int _col;
+        private int _interval;
         private ViewCell[][] _viewList;
         private int _MaxVal;
 
         private ILog _logger;
-        private IData _data;
-        public ViewUc(ILog logger, IData data, Dictionary<string,string> param)
+        private ILogicalManager _logicalManager;
+        public ViewUc(ILog logger, ILogicalManager logicalManager, Dictionary<string,string> param)
         {
             InitializeComponent();
             this._logger = logger;
-            this._data = data;
+            this._logicalManager = logicalManager;
             LoadParam(param);
             InitTimer();
-            InitViewCell();
+            CreateViewCell();
         }
 
 
@@ -42,6 +43,7 @@ namespace ViewSystem
                 this._MaxVal = int.Parse(param["MaxValue"]);
                 this._row = int.Parse(param["Row"]);
                 this._col = int.Parse(param["Col"]);
+                this._interval = int.Parse(param["Interval"]);
             }
             catch (Exception e)
             {
@@ -52,23 +54,64 @@ namespace ViewSystem
         {
             this._redrawTimer = new Timer()
             {
-                Interval = 100
+                Interval = this._interval
             };
             this._redrawTimer.Tick += (s, e) =>
             {
-                Dictionary <int ,double> value = this._data.ReadData();
-                for (int i = 0; i < this._row; i++)
-                    for (int j = 0; j < this._col; j++)
+                Dictionary<int, double> value = new Dictionary<int, double>();
+                string msg;
+                bool res = this._logicalManager.ReadData(ref value,out msg);
+                if (!res)
+                    this._logger.Error(msg);
+                //for (int i = 0; i < this._row; i++)
+                //    for (int j = 0; j < this._col; j++)
+                //    {
+                //        int key = i * this._row + j;
+                //        if (value.ContainsKey(key))
+                //        {
+                //            this._viewList[i][j].ProgressPainter = PainterFactory.GetProgressPainter(this._MaxVal, value[key]);
+                //            this._viewList[i][j].Text = value[key].ToString("F4");
+                //        }
+
+                //    }
+
+                for (int j = 0; j < this._col - 5; j++)
+                    for (int i = this._row - 1; i >= 0; i--)
                     {
-                        int key = i * this._row + j;
-                        if(value.ContainsKey(key))
-                            this._viewList[j][j].ProgressPainter = PainterFactory.GetProgressPainter(this._MaxVal, value[key]);
+                        int key = j * this._row + this._row - i - 1;
+                        if (value.ContainsKey(key))
+                        {
+                            this._viewList[i][j].ProgressPainter = PainterFactory.GetProgressPainter(this._MaxVal, value[key]);
+                            this._viewList[i][j].Text = value[key].ToString("F4");
+                        }
+
                     }
-                
+
+
+                for (int j = 5; j <= this._col - 1; j++)
+                    for (int i = 0; i <= this._col - 1; i++)
+                    {
+                        int key = j * this._row + i;
+                        if (value.ContainsKey(key))
+                        {
+                            this._viewList[i][j].ProgressPainter = PainterFactory.GetProgressPainter(this._MaxVal, value[key]);
+                            this._viewList[i][j].Text = value[key].ToString("F4");
+                        }
+
+                    }
+
             };
-            this._redrawTimer.Start();
+            
         }
-        private void InitViewCell()
+
+        public void Run(bool isRun)
+        {
+            if (isRun)
+                this._redrawTimer.Start();
+            else
+                this._redrawTimer.Stop();
+        }
+        private void CreateViewCell()
         {
             this._viewList = new ViewCell[this._row][];
             for (int i = 0; i < this._row; i++)
@@ -82,12 +125,13 @@ namespace ViewSystem
             for (int i = 0; i < this._row; i++)
             {
                 for (int j = 0; j < this._row; j++)
-                    Cell(out this._viewList[i][j], i, j, viewPanel);
+                    InitiCell(out this._viewList[i][j], i, j, viewPanel);
             }
             viewPanel.ResumeLayout(false);
            
         }
         
+
         private TableLayoutPanel CreateViewPanel()
         {
             TableLayoutPanel viewPanel = new TableLayoutPanel();
@@ -101,14 +145,20 @@ namespace ViewSystem
             viewPanel.RowCount = panelrow;
             viewPanel.Size = new System.Drawing.Size(500, 500);
             viewPanel.TabIndex = 0;
+           
+            
           //  float widthfirst = 30;
             float widthPercent = (float)((100.0) / panelcol) - 1;
             float heightPercent = (float)(100.0 / panelrow) - 1;
             //viewPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, widthfirst));
             for (int col = 0; col < panelcol; col++)
                 viewPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, widthPercent));
+            
+                
             for (int row = 0; row < panelrow; row++)
                 viewPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, heightPercent));
+
+            viewPanel.RowStyles[0].Height = 0;
             this.SuspendLayout();
             this.Controls.Add(viewPanel);
             this.ResumeLayout(false);
@@ -116,7 +166,7 @@ namespace ViewSystem
             return viewPanel;
         }
 
-        private void Cell(out ViewCell bc, int row, int col, TableLayoutPanel tbLayoutPanel)
+        private void InitiCell(out ViewCell bc, int row, int col, TableLayoutPanel tbLayoutPanel)
         {
             bc = new ViewCell(row, col);
             bc.BorderPainter  = PainterFactory.GetPlainBoarderPainter();

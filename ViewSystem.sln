@@ -4,8 +4,16 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ViewSystem", "ViewSystem\ViewSystem.csproj", "{B3D07E75-BCAB-4B7D-937E-DF97282707DE}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1AB05B47-C9F8-4F09-BE6A-62E534E2AB96} = {1AB05B47-C9F8-4F09-BE6A-62E534E2AB96}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataService", "DataService\DataService.csproj", "{709F7C1A-F2F1-442F-8854-26243B4BDE26}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1AB05B47-C9F8-4F09-BE6A-62E534E2AB96} = {1AB05B47-C9F8-4F09-BE6A-62E534E2AB96}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogicalModel", "LogicalModel\LogicalModel.csproj", "{1AB05B47-C9F8-4F09-BE6A-62E534E2AB96}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +29,11 @@ Global
 		{709F7C1A-F2F1-442F-8854-26243B4BDE26}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{709F7C1A-F2F1-442F-8854-26243B4BDE26}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{709F7C1A-F2F1-442F-8854-26243B4BDE26}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1AB05B47-C9F8-4F09-BE6A-62E534E2AB96}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1AB05B47-C9F8-4F09-BE6A-62E534E2AB96}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1AB05B47-C9F8-4F09-BE6A-62E534E2AB96}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1AB05B47-C9F8-4F09-BE6A-62E534E2AB96}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1AB05B47-C9F8-4F09-BE6A-62E534E2AB96}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

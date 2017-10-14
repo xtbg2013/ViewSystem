@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Settings>
   <MaxValue>255</MaxValue> 
-  <Row>11</Row>
-  <Col>11</Col>
+  <Row>10</Row>
+  <Col>10</Col>
+  <Interval>1</Interval>
+  <Port>COM17</Port>
 </Settings> 
